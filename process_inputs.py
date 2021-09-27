@@ -1,14 +1,12 @@
+from tempfile import template
 from pdf2image import convert_from_bytes
 from loguru import logger
 import numpy as np
 from src.image_registration import *
 from torch_snippets import read, crop_from_bb
 
-template_image = read('./templates/w9_main.jpg')
-impath, names, boxes = read_content("./templates/w9_main.xml")
-label_boxes = [box for box, name in zip(boxes, names) if name == 'label']
-field_boxes = [(box, name)
-               for box, name in zip(boxes, names) if name != 'label']
+templates = ['./templates/w9_main_resized.kp',
+             './templates/cms_form_resized.kp']
 
 
 def process_pdf(pdf_bytes, ocr):
@@ -29,9 +27,20 @@ def process_pdf(pdf_bytes, ocr):
     logger.info('Processing PDF ....')
     ims = convert_from_bytes(pdf_bytes)
     first_page = np.array(ims[0])
+    logger.info('Detecting template')
+    template_kps, template_xml = detect_template(first_page, templates)
+    impath, names, boxes = read_content(template_xml)
+    label_boxes = [box for box, name in zip(boxes, names) if name == 'label']
+    field_boxes = [(box, name)
+                   for box, name in zip(boxes, names) if name != 'label']
+    if template_kps == -1:
+        logger.info('No valid template found.....')
+        return first_page, {'error': "Not enough matches"}
+
     logger.info('Registering to template.......')
-    registered_img = register_to_template(first_page, template_image)
+    registered_img = register_to_template(first_page, template_kps)
     logger.info('Removing labels.......')
+
     output_img = registered_img
     for label_box in label_boxes:
         x, y, X, Y = label_box
