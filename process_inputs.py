@@ -29,13 +29,13 @@ def process_pdf(pdf_bytes, ocr):
     first_page = np.array(ims[0])
     logger.info('Detecting template')
     template_kps, template_xml = detect_template(first_page, templates)
+    if template_kps == -1:
+        logger.info('No valid template found.....')
+        return first_page, {'error': "Not enough matches"}
     impath, names, boxes = read_content(template_xml)
     label_boxes = [box for box, name in zip(boxes, names) if name == 'label']
     field_boxes = [(box, name)
                    for box, name in zip(boxes, names) if name != 'label']
-    if template_kps == -1:
-        logger.info('No valid template found.....')
-        return first_page, {'error': "Not enough matches"}
 
     logger.info('Registering to template.......')
     registered_img = register_to_template(first_page, template_kps)
