@@ -53,5 +53,6 @@ def process_pdf(pdf_bytes, ocr):
         text = crop_results[1]
         conf = crop_results[2]
         result[name] = {"text": text, "confidence": conf, 'bb': box}
+     logger.info('Transcription Complete.......')
 
     return output_img, result
