@@ -1,4 +1,5 @@
 from uuid import uuid1
+from xml.etree.ElementTree import dump
 from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,9 +8,11 @@ from io import BytesIO
 from pydantic import BaseModel
 from easyocr import Reader
 from src.image_utils import convert_bbs
+from src.image_registration import dump_template
 import numpy as np
 from loguru import logger
 from starlette.responses import FileResponse, JSONResponse
+from pdf2image import convert_from_bytes
 from process_inputs import process_pdf
 import cv2
 from uuid import uuid1
@@ -59,6 +62,22 @@ async def process_pdf_from_template(img: UploadFile = File(...)):
     return result
 
 
+@app.post('/add_template')
+async def add_pdf_template(img: UploadFile = File(...)):
+    try:
+        logger.info('Processing PDF ....')
+        ims = convert_from_bytes(img.file.read())
+        first_page = np.array(ims[0])
+        filename = f'template_{str(uuid1())}'
+        logger.info('Dumping Template image and keypoints')
+        dump_template(first_page, filename)
+        logger.info('DONE!')
+        result = {'status': 'SUCCESS', 'fileid': filename, 'error': ''}
+    except Exception as e:
+        result = {'status': 'FAILURE', 'error': e}
+    return result
+
+
 @app.get('/image/{impath}')
 async def show_image(impath: str):
     return FileResponse(f'data/{impath}')
@@ -82,6 +101,12 @@ async def main():
 
                 <h2>Templated PDF</h2>
                 <form action="/pdf_template/" enctype="multipart/form-data" method="post">
+                <input name="img" type="file">
+                <input type="submit">
+                </form>
+
+                <h2>Add a template</h2>
+                <form action="/add_template/" enctype="multipart/form-data" method="post">
                 <input name="img" type="file">
                 <input type="submit">
                 </form>

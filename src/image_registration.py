@@ -1,8 +1,40 @@
 __all__ = ['loaddill', 'register_to_template',
-           'read_content', 'detect_template']
+           'read_content', 'detect_template', 'dump_template']
 
-from torch_snippets import loaddill, cv2, np, logger
+from torch_snippets import loaddill, cv2, np, logger, dumpdill
 import xml.etree.ElementTree as ET
+from PIL import Image
+
+filepath = __file__
+TEMPLATES = '/'.join(filepath.split('/')[:-2])+'/templates'
+
+def dump_keypoints(kps, desc, filename):
+    '''
+    Preprocesses kepypoints and dumps them onto the disk
+    Inputs:
+        kps, desc -> Keypoints and Description computed using AKAZE
+    '''
+    pickle_kps = []
+    for point in kps:
+        kp = (point.pt, point.size, point.angle, point.response, point.octave, 
+                point.class_id)
+        pickle_kps.append(kp)
+    dumpdill((pickle_kps, desc), filename)
+
+def dump_template(image, filename):
+    '''
+    Computes the keypoints for the original and resized template image and dumps them onto disk along with the image file
+    Inputs:
+        image -> Input image(usually that of a blank template) as a Numpy Array
+        filename -> Filename to be used to identify the keypoints
+    '''
+    detector = cv2.AKAZE_create()
+    kps, desc = detector.detectAndCompute(image, None)
+    kps_resized, desc_resized = detector.detectAndCompute(image[::4, ::4], None)
+    Image.fromarray(image).save(f'{TEMPLATES}/{filename}.jpg')
+    dump_keypoints(kps, desc, f'{TEMPLATES}/{filename}.kp')
+    dump_keypoints(kps_resized, desc_resized, f'{TEMPLATES}/{filename}_resized.kp')
+    logger.info('DONE!')
 
 
 def load_keypoints(dill):

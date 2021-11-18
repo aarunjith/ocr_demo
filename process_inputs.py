@@ -3,11 +3,7 @@ from pdf2image import convert_from_bytes
 from loguru import logger
 import numpy as np
 from src.image_registration import *
-from torch_snippets import read, crop_from_bb
-
-templates = ['./templates/w9_main_resized.kp',
-             './templates/cms_form_resized.kp']
-
+from torch_snippets import read, crop_from_bb, Glob
 
 def process_pdf(pdf_bytes, ocr):
     '''
@@ -23,6 +19,8 @@ def process_pdf(pdf_bytes, ocr):
     Outputs:
         Python Dict -> Dictionary containing Key Value pairs extracted from the pdf
     '''
+
+    templates = Glob('./templates/*_resized.kp')
 
     logger.info('Processing PDF ....')
     ims = convert_from_bytes(pdf_bytes)
@@ -53,6 +51,6 @@ def process_pdf(pdf_bytes, ocr):
         text = crop_results[1]
         conf = crop_results[2]
         result[name] = {"text": text, "confidence": conf, 'bb': box}
-     logger.info('Transcription Complete.......')
+    logger.info('Transcription Complete.......')
 
     return output_img, result
