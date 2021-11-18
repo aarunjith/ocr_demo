@@ -5,6 +5,7 @@ import numpy as np
 from src.image_registration import *
 from torch_snippets import read, crop_from_bb, Glob
 
+
 def process_pdf(pdf_bytes, ocr):
     '''
     Transcribe input pdf (bytes) after the following steps:
@@ -21,7 +22,7 @@ def process_pdf(pdf_bytes, ocr):
     '''
 
     templates = Glob('./templates/*_resized.kp')
-
+    templates = [str(template) for template in templates]
     logger.info('Processing PDF ....')
     ims = convert_from_bytes(pdf_bytes)
     first_page = np.array(ims[0])

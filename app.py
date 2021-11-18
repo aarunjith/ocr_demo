@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import uuid1
 from xml.etree.ElementTree import dump
 from fastapi import FastAPI, Request, UploadFile, File
@@ -79,8 +80,11 @@ async def add_pdf_template(img: UploadFile = File(...)):
 
 
 @app.get('/image/{impath}')
-async def show_image(impath: str):
-    return FileResponse(f'data/{impath}')
+async def show_image(impath: str, template: Optional[str] = None):
+    if not template:
+        return FileResponse(f'data/{impath}')
+    elif template == 'yes':
+        return FileResponse(f'templates/{impath}.jpg')
 
 
 @app.get("/")
