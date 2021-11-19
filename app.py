@@ -84,12 +84,13 @@ async def add_labels(labeldata: Request):
     try:
         logger.info('Request recieved')
         labeldata = await labeldata.json()
-        filename = labeldata.filename
-        annotations = labeldata.Annotation
+        filename = labeldata['filename']
+        annotations = labeldata['Annotation']
         convert_to_pascal(annotations, filename)
         result = {'status': 'SUCCESS', 'error': ''}
     except Exception as e:
         result = {'status': 'FAILURE', 'error': e}
+    logger.info(result)
     return result
 
 
