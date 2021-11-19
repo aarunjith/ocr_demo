@@ -9,7 +9,7 @@ from io import BytesIO
 from pydantic import BaseModel
 from easyocr import Reader
 from src.image_utils import convert_bbs
-from src.image_registration import dump_template
+from src.image_registration import dump_template, convert_to_pascal
 import numpy as np
 from loguru import logger
 from starlette.responses import FileResponse, JSONResponse
@@ -74,6 +74,20 @@ async def add_pdf_template(img: UploadFile = File(...)):
         dump_template(first_page, filename)
         logger.info('DONE!')
         result = {'status': 'SUCCESS', 'fileid': filename, 'error': ''}
+    except Exception as e:
+        result = {'status': 'FAILURE', 'error': e}
+    return result
+
+
+@app.post('/add_labels')
+async def add_labels(labeldata: Request):
+    try:
+        logger.info('Request recieved')
+        labeldata = await labeldata.json()
+        filename = labeldata.filename
+        annotations = labeldata.Annotation
+        convert_to_pascal(annotations, filename)
+        result = {'status': 'SUCCESS', 'error': ''}
     except Exception as e:
         result = {'status': 'FAILURE', 'error': e}
     return result

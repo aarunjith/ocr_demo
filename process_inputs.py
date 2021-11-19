@@ -21,8 +21,9 @@ def process_pdf(pdf_bytes, ocr):
         Python Dict -> Dictionary containing Key Value pairs extracted from the pdf
     '''
 
-    templates = Glob('./templates/*_resized.kp')
+    templates = Glob('./templates/*.xml')
     templates = [str(template) for template in templates]
+    templates = [temp.split('.xml')[0]+'_resized.kp' for temp in templates]
     logger.info('Processing PDF ....')
     ims = convert_from_bytes(pdf_bytes)
     first_page = np.array(ims[0])

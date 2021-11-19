@@ -4,9 +4,12 @@ __all__ = ['loaddill', 'register_to_template',
 from torch_snippets import loaddill, cv2, np, logger, dumpdill
 import xml.etree.ElementTree as ET
 from PIL import Image
+from typing import Union
+from xml.dom.minidom import parseString
 
 filepath = __file__
 TEMPLATES = '/'.join(filepath.split('/')[:-2])+'/templates'
+
 
 def dump_keypoints(kps, desc, filename):
     '''
@@ -16,10 +19,11 @@ def dump_keypoints(kps, desc, filename):
     '''
     pickle_kps = []
     for point in kps:
-        kp = (point.pt, point.size, point.angle, point.response, point.octave, 
-                point.class_id)
+        kp = (point.pt, point.size, point.angle, point.response, point.octave,
+              point.class_id)
         pickle_kps.append(kp)
     dumpdill((pickle_kps, desc), filename)
+
 
 def dump_template(image, filename):
     '''
@@ -30,10 +34,12 @@ def dump_template(image, filename):
     '''
     detector = cv2.AKAZE_create()
     kps, desc = detector.detectAndCompute(image, None)
-    kps_resized, desc_resized = detector.detectAndCompute(image[::4, ::4], None)
+    kps_resized, desc_resized = detector.detectAndCompute(
+        image[::4, ::4], None)
     Image.fromarray(image).save(f'{TEMPLATES}/{filename}.jpg')
     dump_keypoints(kps, desc, f'{TEMPLATES}/{filename}.kp')
-    dump_keypoints(kps_resized, desc_resized, f'{TEMPLATES}/{filename}_resized.kp')
+    dump_keypoints(kps_resized, desc_resized,
+                   f'{TEMPLATES}/{filename}_resized.kp')
     logger.info('DONE!')
 
 
@@ -156,3 +162,45 @@ def read_content(xml_file: str):
         list_with_all_boxes.append(list_with_single_boxes)
 
     return filepath, box_names, list_with_all_boxes
+
+
+def object_to_xml(data: Union[dict, bool], root='annotation'):
+    '''
+    Convert python object to XML string
+    '''
+    if root.startswith('object'):
+        root = 'object'
+    xml = f'<{root}>'
+    if isinstance(data, dict):
+        for key, value in data.items():
+            xml += object_to_xml(value, key)
+
+    else:
+        xml += str(data)
+
+    xml += f'</{root}>'
+    return xml
+
+
+def convert_to_pascal(annotation, filename):
+    '''
+    Convert Label Studio Annotation to PASCAL VOC format.
+    Inputs:
+        annotation -> List of dicts containing annotation information
+    '''
+    width = annotation[0]['original_width']
+    height = annotation[0]['original_height']
+    annotation_dict = {'filename': f'{filename}.jpg'}
+    for ix, ob in enumerate(annotation):
+        annotation_dict[f'object_{ix}'] = {'name': ob['value']['rectanglelabels'][0], 'bndbox': {
+            'xmin': int(ob['value']['x']/100*width),
+            'ymin': int(ob['value']['y']/100*height),
+            'xmax': int(ob['value']['x']/100*width) + int(ob['value']['width']/100*width),
+            'ymax': int(ob['value']['y']/100*height) + int(ob['value']['height']/100*height)
+        }}
+    xml = object_to_xml(annotation_dict)
+    dom = parseString(xml)
+    logger.info(f'Writing XML data to {TEMPLATES}/{filename}.xml')
+    with open(f'{TEMPLATES}/{filename}.xml', 'w') as doc:
+        doc.write(dom.toprettyxml())
+    logger.info(f'DONE!!')
