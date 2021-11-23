@@ -17,6 +17,7 @@ from pdf2image import convert_from_bytes
 from process_inputs import process_pdf
 import cv2
 from uuid import uuid1
+from tasks import start_processing
 
 app = FastAPI()
 app.add_middleware(
@@ -61,6 +62,11 @@ async def process_pdf_from_template(img: UploadFile = File(...)):
     image.save('data/' + impath)
     result['image'] = impath
     return result
+
+
+@app.post('/batch_process')
+async def process_pdf_async(img: UploadFile = File(...)):
+    result = start_processing.delay(img.file.read(), ocr)
 
 
 @app.post('/add_template')
