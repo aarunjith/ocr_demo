@@ -6,9 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from io import BytesIO
-from pydantic import BaseModel
 from easyocr import Reader
-from pymongo import collection
 from src.image_utils import convert_bbs
 from src.image_registration import dump_template, convert_to_pascal
 import numpy as np
@@ -16,7 +14,6 @@ from loguru import logger
 from starlette.responses import FileResponse, JSONResponse
 from pdf2image import convert_from_bytes
 from process_inputs import process_pdf
-import cv2
 from uuid import uuid1
 from tasks import start_processing
 from celery.result import AsyncResult
