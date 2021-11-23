@@ -1,8 +1,7 @@
-from tempfile import template
-from pdf2image import convert_from_bytes
 from loguru import logger
 import numpy as np
-from src.image_registration import *
+from pdf2image.pdf2image import convert_from_path, convert_from_bytes
+from src.image_registration import detect_template, read_content, register_to_template
 from torch_snippets import read, crop_from_bb, Glob
 
 
@@ -24,9 +23,15 @@ def process_pdf(pdf_bytes, ocr):
     templates = Glob('./templates/*.xml')
     templates = [str(template) for template in templates]
     templates = [temp.split('.xml')[0]+'_resized.kp' for temp in templates]
-    logger.info('Processing PDF ....')
-    ims = convert_from_bytes(pdf_bytes)
-    first_page = np.array(ims[0])
+    if isinstance(pdf_bytes, str):
+        logger.info('Processing PDF path....')
+        ims = convert_from_path(pdf_bytes)
+        first_page = np.array(ims[0])
+    else:
+        logger.info('Processing PDF bytes....')
+        ims = convert_from_bytes(pdf_bytes)
+        first_page = np.array(ims[0])
+
     logger.info('Detecting template')
     template_kps, template_xml = detect_template(first_page, templates)
     if template_kps == -1:

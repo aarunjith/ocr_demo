@@ -8,6 +8,7 @@ from PIL import Image
 from io import BytesIO
 from pydantic import BaseModel
 from easyocr import Reader
+from pymongo import collection
 from src.image_utils import convert_bbs
 from src.image_registration import dump_template, convert_to_pascal
 import numpy as np
@@ -18,6 +19,14 @@ from process_inputs import process_pdf
 import cv2
 from uuid import uuid1
 from tasks import start_processing
+from celery.result import AsyncResult
+import pymongo
+
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+# Database Name
+db = client["task_results"]
+# Collection Name
+coll = db["celery_taskmeta"]
 
 app = FastAPI()
 app.add_middleware(
@@ -66,7 +75,29 @@ async def process_pdf_from_template(img: UploadFile = File(...)):
 
 @app.post('/batch_process')
 async def process_pdf_async(img: UploadFile = File(...)):
-    result = start_processing.delay(img.file.read(), ocr)
+    try:
+        with open('./data/temp.pdf', 'wb') as file:
+            file.write(img.file.read())
+        result = start_processing.delay()
+        return {"status": result.state, 'id': result.id, 'error': ''}
+    except Exception as e:
+        return {"status": 'FAILURE', 'error': e}
+
+
+@app.post('/check_progress/{task_id}')
+async def check_async_progress(task_id: str):
+    try:
+        result = AsyncResult(task_id)
+        if result.ready():
+            data = coll.find({'_id': task_id})[0]
+            return {'status': 'SUCEESS', 'data': data['result']}
+        else:
+            return {"status": result.state, "error": ''}
+    except Exception as e:
+        data = coll.find({'_id': task_id})[0]
+        if data:
+            return {'status': 'SUCEESS', 'data': data['result']}
+        return {'status': 'Task ID invalid', 'error': e}
 
 
 @app.post('/add_template')
