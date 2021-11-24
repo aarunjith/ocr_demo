@@ -16,3 +16,4 @@ aiofiles==0.7.0
 uvicorn
 python-multipart
 celery[mongodb]
+PyQt5
