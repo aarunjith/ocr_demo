@@ -19,7 +19,7 @@ from tasks import start_processing
 from celery.result import AsyncResult
 import pymongo
 
-client = pymongo.MongoClient("mongodb://localhost:27017/")
+client = pymongo.MongoClient("mongodb://mongodb:27017/")
 # Database Name
 db = client["task_results"]
 # Collection Name

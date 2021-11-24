@@ -6,8 +6,8 @@ from numpy.lib.recfunctions import recursive_fill_fields
 
 sys.path.append(os.getcwd())
 
-app = Celery('OCR', broker="amqp://localhost:5672",
-             backend="mongodb://localhost:27017/task_results")
+app = Celery('OCR', broker="amqp://rabbitmq:5672",
+             backend="mongodb://mongodb:27017/task_results")
 
 
 @app.task(bind=True)
