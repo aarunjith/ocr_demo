@@ -3,9 +3,13 @@ import numpy as np
 from pdf2image.pdf2image import convert_from_path, convert_from_bytes
 from src.image_registration import detect_template, read_content, register_to_template
 from torch_snippets import read, crop_from_bb, Glob
+import boto3
+from PIL import Image
+from io import BytesIO
 
+client = boto3.client('textract', region_name='eu-west-2')
 
-def process_pdf(pdf_bytes, ocr):
+def process_pdf(pdf_bytes, ocr, textract=True):
     '''
     Transcribe input pdf (bytes) after the following steps:
         1. Registers the first page to the template image
@@ -54,10 +58,28 @@ def process_pdf(pdf_bytes, ocr):
     logger.info('Transcribing.......')
     for box, name in field_boxes:
         crop = crop_from_bb(registered_img, tuple(box))
-        crop_results = ocr.recognize(crop)[0]
-        text = crop_results[1]
-        conf = crop_results[2]
-        result[name] = {"text": text, "confidence": conf, 'bb': box}
+        if textract:
+            text, conf = get_text_textract(crop, client)
+            result[name] = {"text": text, "confidence": conf, 'bb': box}
+        else:
+            crop_results = ocr.recognize(crop)[0]
+            text = crop_results[1]
+            conf = crop_results[2]
+            result[name] = {"text": text, "confidence": conf, 'bb': box}
     logger.info('Transcription Complete.......')
 
     return output_img, result
+
+def get_text_textract(image, client):
+    '''
+    image : Numpy array image
+    '''
+    image = Image.fromarray(image)
+    image_bytes = BytesIO()
+    image.save(image_bytes, format='JPEG')
+    image_bytes = image_bytes.getvalue()
+    client = boto3.client('textract', region_name='eu-west-2')
+    response = client.detect_document_text(Document={'Bytes': image_bytes})
+    text = [{'text':doc['Text'], 'conf': doc['Confidence']} for doc in response['Blocks'] if doc['BlockType'] == 'LINE']
+    text = {'text': '\n'.join([doc['text'] for doc in text]), 'conf': min([doc['conf'] for doc in text])}
+    return text['text'], text['conf']
