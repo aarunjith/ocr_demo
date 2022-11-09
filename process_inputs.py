@@ -9,7 +9,7 @@ from io import BytesIO
 
 client = boto3.client('textract', region_name='eu-west-2')
 
-def process_pdf(pdf_bytes, ocr, textract=True):
+def process_pdf(pdf_bytes, ocr, textract=False):
     '''
     Transcribe input pdf (bytes) after the following steps:
         1. Registers the first page to the template image
