@@ -7,8 +7,6 @@ import boto3
 from PIL import Image
 from io import BytesIO
 
-client = boto3.client('textract', region_name='eu-west-2')
-
 def process_pdf(pdf_bytes, ocr, textract=False):
     '''
     Transcribe input pdf (bytes) after the following steps:
@@ -59,6 +57,7 @@ def process_pdf(pdf_bytes, ocr, textract=False):
     for box, name in field_boxes:
         crop = crop_from_bb(registered_img, tuple(box))
         if textract:
+            client = boto3.client('textract', region_name='eu-west-2')
             text, conf = get_text_textract(crop, client)
             result[name] = {"text": text, "confidence": conf, 'bb': box}
         else:
