@@ -11,9 +11,6 @@ COPY tasks.py .
 COPY process_inputs.py .
 COPY templates/* templates/
 
-ENV AWS_ACCESS_KEY_ID=
-ENV AWS_SECRET_ACCESS_KEY=
-
 RUN pip3 install -r requirements.txt
 RUN conda install -c conda-forge poppler
 EXPOSE 8080
