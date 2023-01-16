@@ -18,8 +18,11 @@ from uuid import uuid1
 from tasks import start_processing
 from celery.result import AsyncResult
 import pymongo
+import os
 
-client = pymongo.MongoClient("mongodb://mongodb:27017/")
+MONGO_URL = os.environ['MONGO_URL']
+
+client = pymongo.MongoClient(f"mongodb://{MONGO_URL}:27017/")
 # Database Name
 db = client["task_results"]
 # Collection Name
