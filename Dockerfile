@@ -11,7 +11,7 @@ COPY tasks.py .
 COPY process_inputs.py .
 COPY templates/* templates/
 RUN apt update -y
-RUN apt install build-essential cmake libopenblas-dev liblapack-dev libx11-dev libgtk-3-dev -y
+RUN apt install build-essential cmake libopenblas-dev liblapack-dev libx11-dev libgtk-3-dev libjpeg-dev zlib1g-dev ibpng-dev -y
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
 RUN conda install -c conda-forge poppler
