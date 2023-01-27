@@ -29,6 +29,8 @@ def process_pdf(pdf_bytes, ocr, textract=False):
         logger.info('Processing PDF path....')
         ims = convert_from_path(pdf_bytes)
         first_page = np.array(ims[0])
+    elif isinstance(pdf_bytes, np.ndarray):
+        first_page = pdf_bytes
     else:
         logger.info('Processing PDF bytes....')
         ims = convert_from_bytes(pdf_bytes)
