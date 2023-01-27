@@ -63,11 +63,11 @@ async def transcribe_crop(img: UploadFile = File(...)):
     return outputs
 
 
-@app.post('/pdf_template/{image}')
-async def process_pdf_from_template(img: UploadFile = File(...)):
-    if image == '0':
+@app.post('/pdf_template')
+async def process_pdf_from_template(img: UploadFile = File(...), pdf: str = Form()):
+    if pdf == '0':
         registered_img, result = process_pdf(img.file.read(), ocr)
-    elif image == '1':
+    elif pdf == '1':
         image = await img.read()
         temp_img = np.array(Image.open(BytesIO(image)))
         registered_img, result = process_pdf(temp_img, ocr)
