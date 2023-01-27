@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import uuid1
 from xml.etree.ElementTree import dump
-from fastapi import FastAPI, Request, UploadFile, File
+from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
@@ -64,7 +64,7 @@ async def transcribe_crop(img: UploadFile = File(...)):
 
 
 @app.post('/pdf_template')
-async def process_pdf_from_template(img: UploadFile = File(...), pdf: str = Form()):
+async def process_pdf_from_template(img: UploadFile = File(...), pdf: str = Form(...)):
     if pdf == '0':
         registered_img, result = process_pdf(img.file.read(), ocr)
     elif pdf == '1':
