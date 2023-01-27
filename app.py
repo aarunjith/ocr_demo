@@ -63,9 +63,16 @@ async def transcribe_crop(img: UploadFile = File(...)):
     return outputs
 
 
-@app.post('/pdf_template')
+@app.post('/pdf_template/{image}')
 async def process_pdf_from_template(img: UploadFile = File(...)):
-    registered_img, result = process_pdf(img.file.read(), ocr)
+    if image == '0':
+        registered_img, result = process_pdf(img.file.read(), ocr)
+    elif image == '1':
+        image = await img.read()
+        temp_img = np.array(Image.open(BytesIO(image)))
+        registered_img, result = process_pdf(temp_img, ocr)
+    else:
+        return {'error': 'Unknown input type'}
     image = Image.fromarray(registered_img)
     impath = f'{str(uuid1())}.jpg'
     image.save('data/' + impath)
